@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-const port = process.env.PORT || 3030;
+const port = process.env.PORT || 3031;
 // Middleware per parsejar el cos de les sol·licituds a JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,7 +19,9 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
-
+app.get('/', (req, res) => {
+  res.send('Hello World 22222!');
+});
 
 app.post('/users', async (req, res) => {
   /// res.status(200).json(req.body);
@@ -91,7 +93,8 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
-// Inicia el servidorxºxºz  
+// changed
+// Inicia el servidor
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
