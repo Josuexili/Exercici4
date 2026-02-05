@@ -78,7 +78,8 @@
         <h2>Afegir / Editar Tasca</h2>
         <input type="hidden" id="tascaId" />
         <input id="nom" placeholder="Nom" />
-        <input id="cognom1" placeholder="Cognom" />
+        <input id="cognom1" placeholder="Cognom 1" />
+        <input id="cognom2" placeholder="Cognom 2" />
         <input id="dataEntrada" type="date" />
         <textarea id="observacions" placeholder="Observacions"></textarea>
 
@@ -110,6 +111,7 @@
             const data = {
                 nom: document.getElementById("nom").value,
                 cognom1: document.getElementById("cognom1").value,
+                cognom2: document.getElementById("cognom2").value,
                 dataEntrada: document.getElementById("dataEntrada").value,
                 observacions: document.getElementById("observacions").value,
             };
@@ -137,6 +139,7 @@
             document.getElementById("tascaId").value = t._id;
             document.getElementById("nom").value = t.nom;
             document.getElementById("cognom1").value = t.cognom1;
+            document.getElementById("cognom2").value = t.cognom2 || "";
             document.getElementById("observacions").value = t.observacions || "";
 
             const data = new Date(t.dataEntrada).toISOString().split("T")[0];
@@ -150,6 +153,7 @@
             document.getElementById("tascaId").value = "";
             document.getElementById("nom").value = "";
             document.getElementById("cognom1").value = "";
+            document.getElementById("cognom2").value = "";
             document.getElementById("observacions").value = "";
             document.getElementById("dataEntrada").value = "";
 
@@ -169,7 +173,7 @@
                 div.className = "task " + (t.completa ? "completed" : "");
 
                 div.innerHTML = `
-      <strong>${t.nom} ${t.cognom1}</strong><br>
+      <strong>${t.nom} ${t.cognom1} ${t.cognom2 || ""}</strong><br>
       ${t.observacions || ""}<br>
       <small>${new Date(t.dataEntrada).toLocaleDateString()}</small>
       <div class="actions">
@@ -239,7 +243,7 @@
                 div.className = "task " + (t.completa ? "completed" : "");
 
                 div.innerHTML = `
-      <strong>${t.nom} ${t.cognom1}</strong><br>
+      <strong>${t.nom} ${t.cognom1} ${t.cognom2 || ""}</strong><br>
       ${t.observacions || ""}<br>
       <small>${new Date(t.dataEntrada).toLocaleDateString()}</small>
       <div class="actions">
