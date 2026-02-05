@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Gestor de Tasques</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            background: #f5f5f5;
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        input,
+        textarea,
+        button,
+        select {
+            padding: 8px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .task {
+            background: #fff;
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 5px solid #007bff;
+        }
+
+        .completed {
+            border-left-color: green;
+            opacity: 0.7;
+        }
+
+        .actions button {
+            width: auto;
+            margin-right: 5px;
+            background: #444;
+        }
+
+        .delete {
+            background: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Gestor de Tasques</h1>
+
+    <div class="card">
+        <h2>Afegir / Editar Tasca</h2>
+        <input type="hidden" id="tascaId" />
+        <input id="nom" placeholder="Nom" />
+        <input id="cognom1" placeholder="Cognom" />
+        <input id="dataEntrada" type="date" />
+        <textarea id="observacions" placeholder="Observacions"></textarea>
+
+        <button onclick="guardarTasca()" id="submitBtn">Crear Tasca</button>
+        <button onclick="netejarFormulari()" id="cancelBtn" style="background:#999; display:none;">
+            Cancel·lar edició
+        </button>
+    </div>
+
+    <div class="card">
+        <h2>Filtrar per alumne</h2>
+        <select id="alumneSelect" onchange="carregarTasquesAlumne()">
+            <option value="">-- Selecciona alumne --</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <h2>Llista de Tasques</h2>
+        <button onclick="carregarTasques()">Refrescar</button>
+        <div id="tasques"></div>
+    </div>
+
+    <script>
+        const API = "";
+
+        async function guardarTasca() {
+            const id = document.getElementById("tascaId").value;
+
+            const data = {
+                nom: document.getElementById("nom").value,
+                cognom1: document.getElementById("cognom1").value,
+                dataEntrada: document.getElementById("dataEntrada").value,
+                observacions: document.getElementById("observacions").value,
+            };
+
+            if (id) {
+                await fetch(`${API}/tasques/${id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
+            } else {
+                await fetch(`${API}/tasques`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                });
+            }
+
+            netejarFormulari();
+            carregarTasques();
+            carregarAlumnes();
+        }
+
+        function editarTasca(t) {
+            document.getElementById("tascaId").value = t._id;
+            document.getElementById("nom").value = t.nom;
+            document.getElementById("cognom1").value = t.cognom1;
+            document.getElementById("observacions").value = t.observacions || "";
+
+            const data = new Date(t.dataEntrada).toISOString().split("T")[0];
+            document.getElementById("dataEntrada").value = data;
+
+            document.getElementById("submitBtn").textContent = "Guardar canvis";
+            document.getElementById("cancelBtn").style.display = "block";
+        }
+
+        function netejarFormulari() {
+            document.getElementById("tascaId").value = "";
+            document.getElementById("nom").value = "";
+            document.getElementById("cognom1").value = "";
+            document.getElementById("observacions").value = "";
+            document.getElementById("dataEntrada").value = "";
+
+            document.getElementById("submitBtn").textContent = "Crear Tasca";
+            document.getElementById("cancelBtn").style.display = "none";
+        }
+
+        async function carregarTasques() {
+            const res = await fetch(`${API}/tasques`);
+            const tasques = await res.json();
+
+            const container = document.getElementById("tasques");
+            container.innerHTML = "";
+
+            tasques.forEach(t => {
+                const div = document.createElement("div");
+                div.className = "task " + (t.completa ? "completed" : "");
+
+                div.innerHTML = `
+      <strong>${t.nom} ${t.cognom1}</strong><br>
+      ${t.observacions || ""}<br>
+      <small>${new Date(t.dataEntrada).toLocaleDateString()}</small>
+      <div class="actions">
+        <button onclick='editarTasca(${JSON.stringify(t)})'>Editar</button>
+        <button onclick="toggle('${t._id}', ${t.completa})">
+          ${t.completa ? "Desmarcar" : "Completar"}
+        </button>
+        <button class="delete" onclick="eliminar('${t._id}')">
+          Eliminar
+        </button>
+      </div>
+    `;
+                container.appendChild(div);
+            });
+        }
+
+        async function eliminar(id) {
+            if (!confirm("Eliminar tasca?")) return;
+
+            await fetch(`${API}/tasques/${id}`, {
+                method: "DELETE",
+            });
+
+            carregarTasques();
+            carregarAlumnes();
+        }
+
+        async function toggle(id, estatActual) {
+            await fetch(`${API}/tasques/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    completa: !estatActual
+                }),
+            });
+
+            carregarTasques();
+        }
+
+        async function carregarAlumnes() {
+            const res = await fetch(`${API}/alumnes`);
+            const alumnes = await res.json();
+
+            const select = document.getElementById("alumneSelect");
+            select.innerHTML = `<option value="">-- Selecciona alumne --</option>`;
+
+            alumnes.forEach(a => {
+                const opt = document.createElement("option");
+                opt.value = a.nom;
+                opt.textContent = `${a.nom} ${a.cognom1}`;
+                select.appendChild(opt);
+            });
+        }
+
+        async function carregarTasquesAlumne() {
+            const nom = document.getElementById("alumneSelect").value;
+            if (!nom) return carregarTasques();
+
+            const res = await fetch(`${API}/alumnes/${nom}/tasques`);
+            const tasques = await res.json();
+
+            const container = document.getElementById("tasques");
+            container.innerHTML = "";
+
+            tasques.forEach(t => {
+                const div = document.createElement("div");
+                div.className = "task " + (t.completa ? "completed" : "");
+
+                div.innerHTML = `
+      <strong>${t.nom} ${t.cognom1}</strong><br>
+      ${t.observacions || ""}<br>
+      <small>${new Date(t.dataEntrada).toLocaleDateString()}</small>
+      <div class="actions">
+        <button onclick='editarTasca(${JSON.stringify(t)})'>Editar</button>
+        <button onclick="toggle('${t._id}', ${t.completa})">
+          ${t.completa ? "Desmarcar" : "Completar"}
+        </button>
+        <button class="delete" onclick="eliminar('${t._id}')">
+          Eliminar
+        </button>
+      </div>
+    `;
+                container.appendChild(div);
+            });
+        }
+
+        // Inicialització
+        carregarTasques();
+        carregarAlumnes();
+    </script>
+
+</body>
+
+</html>
