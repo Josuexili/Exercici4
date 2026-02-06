@@ -230,9 +230,8 @@ app.get('/alumnes/:nom/tasques', async (req, res) => {
 // ===============================
 // INICI DEL SERVIDOR
 // ===============================
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+module.exports = app;
+
 
 
 
